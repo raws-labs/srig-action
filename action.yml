@@ -11,7 +11,7 @@ inputs:
     description: "siliconrig API key"
     required: true
   board:
-    description: "Board type (e.g., esp32-s3)"
+    description: "Board type: esp32-s3, stm32-h753, stm32-f446, or rp2350"
     required: true
   firmware:
     description: "Path to firmware binary"

@@ -45,7 +45,7 @@ Downloads `srig-cli`, creates a session, flashes firmware, captures serial outpu
 | Input | Required | Default | Description |
 |---|---|---|---|
 | `api-key` | Yes | | siliconrig API key |
-| `board` | Yes | | Board type (e.g., `esp32-s3`) |
+| `board` | Yes | | Board type: `esp32-s3`, `stm32-h753`, `stm32-f446`, or `rp2350` |
 | `firmware` | No | | Path to firmware binary |
 | `serial-timeout` | No | `30s` | Serial capture duration |
 | `serial-log` | No | `serial-output.txt` | File to save serial output |
