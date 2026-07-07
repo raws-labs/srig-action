@@ -1,5 +1,5 @@
-name: "siliconrig"
-description: "Flash and test firmware on real MCU hardware in CI/CD"
+name: "SiliconRig HIL"
+description: "Flash and test firmware on real embedded hardware in CI/CD"
 author: "siliconrig"
 
 branding:
