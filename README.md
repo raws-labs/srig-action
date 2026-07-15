@@ -7,7 +7,7 @@ Downloads `srig-cli`, creates a session, flashes firmware, captures serial outpu
 ## Usage
 
 ```yaml
-- uses: siliconrig/action@v1
+- uses: raws-labs/srig-action@v1
   with:
     api-key: ${{ secrets.SRIG_API_KEY }}
     board: esp32-s3
@@ -17,7 +17,7 @@ Downloads `srig-cli`, creates a session, flashes firmware, captures serial outpu
 ### With custom serial timeout and log
 
 ```yaml
-- uses: siliconrig/action@v1
+- uses: raws-labs/srig-action@v1
   id: hil
   with:
     api-key: ${{ secrets.SRIG_API_KEY }}
@@ -33,7 +33,7 @@ Downloads `srig-cli`, creates a session, flashes firmware, captures serial outpu
 ### Session only (no firmware)
 
 ```yaml
-- uses: siliconrig/action@v1
+- uses: raws-labs/srig-action@v1
   with:
     api-key: ${{ secrets.SRIG_API_KEY }}
     board: esp32-s3
