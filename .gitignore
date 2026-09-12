@@ -2,3 +2,8 @@ node_modules/
 dist/
 .DS_Store
 Thumbs.db
+
+# Ignore dotfiles and dotfolders (local tooling state); keep the tracked ones.
+.*
+!.gitignore
+!.github/
