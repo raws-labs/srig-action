@@ -1,6 +1,6 @@
-# siliconrig-action
+# srig-action
 
-GitHub Action for [siliconrig](https://siliconrig.dev) hardware-in-the-loop CI/CD.
+GitHub Action for [SiliconRig](https://siliconrig.dev) hardware-in-the-loop CI/CD.
 
 Downloads `srig-cli`, creates a session, flashes firmware, captures serial output, and cleans up.
 
@@ -44,7 +44,7 @@ Downloads `srig-cli`, creates a session, flashes firmware, captures serial outpu
 
 | Input | Required | Default | Description |
 |---|---|---|---|
-| `api-key` | Yes | | siliconrig API key |
+| `api-key` | Yes | | SiliconRig API key |
 | `board` | Yes | | Board type: `esp32-s3`, `stm32-h753`, `stm32-f446`, or `rp2350` |
 | `firmware` | No | | Path to firmware binary |
 | `serial-timeout` | No | `30s` | Serial capture duration |
