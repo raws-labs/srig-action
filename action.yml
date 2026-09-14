@@ -8,7 +8,7 @@ branding:
 
 inputs:
   api-key:
-    description: "siliconrig API key"
+    description: "SiliconRig API key"
     required: true
   board:
     description: "Board type: esp32-s3, stm32-h753, stm32-f446, or rp2350"
