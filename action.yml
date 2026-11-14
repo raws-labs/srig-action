@@ -28,6 +28,14 @@ inputs:
     description: "srig-cli version to install (default: latest)"
     required: false
     default: "latest"
+  record:
+    description: "Publish the run as a run record: a link anyone can play back, plus a badge. Needs firmware; serial-timeout is the record length (10 to 120 seconds)"
+    required: false
+    default: "false"
+  record-name:
+    description: "Name shown with the record (default: repository@short-sha)"
+    required: false
+    default: ""
 
 outputs:
   session-id:
@@ -36,6 +44,12 @@ outputs:
   serial-log:
     description: "Path to the serial output log file"
     value: ${{ inputs.serial-log }}
+  record-id:
+    description: "ID of the run record, when record is true"
+    value: ${{ steps.record.outputs.record_id }}
+  record-url:
+    description: "Page that plays the run record back, when record is true"
+    value: ${{ steps.record.outputs.record_url }}
 
 runs:
   using: "composite"
@@ -71,8 +85,68 @@ runs:
         chmod +x /usr/local/bin/srig
         srig version
 
+    - name: Record the run
+      id: record
+      if: inputs.record == 'true'
+      shell: bash
+      env:
+        SRIG_API_KEY: ${{ inputs.api-key }}
+      run: |
+        if [ -z "${{ inputs.firmware }}" ]; then
+          echo "::error::record needs firmware"
+          exit 1
+        fi
+        # serial-timeout is the record length: 30s, 2m or plain seconds.
+        T="${{ inputs.serial-timeout }}"
+        SECONDS_=0
+        if [[ "$T" =~ ^([0-9]+)(s|m)?$ ]]; then
+          SECONDS_=${BASH_REMATCH[1]}
+          [ "${BASH_REMATCH[2]}" = m ] && SECONDS_=$(( SECONDS_ * 60 ))
+        fi
+        if [ "$SECONDS_" -lt 10 ] || [ "$SECONDS_" -gt 120 ]; then
+          echo "::error::serial-timeout must be 10 to 120 seconds for a record, got $T"
+          exit 1
+        fi
+        NAME="${{ inputs.record-name }}"
+        [ -n "$NAME" ] || NAME="${GITHUB_REPOSITORY}@${GITHUB_SHA::7}"
+
+        set +e
+        srig record "${{ inputs.firmware }}" --board "${{ inputs.board }}" \
+          --seconds "$SECONDS_" --name "$NAME" --json > srig-record.json
+        RC=$?
+        set -e
+        ID=$(jq -r '.id // empty' srig-record.json 2>/dev/null)
+        if [ -z "$ID" ]; then
+          echo "::error::the record could not be started (srig record exit $RC)"
+          exit 1
+        fi
+        URL=$(jq -r .url srig-record.json)
+        echo "record_id=${ID}" >> "$GITHUB_OUTPUT"
+        echo "record_url=${URL}" >> "$GITHUB_OUTPUT"
+
+        # The recording is the serial log: what the board printed, in order.
+        API="${SRIG_BASE_URL:-https://api.srig.io}"
+        curl -fsSL "$API/v1/run-records/$ID/recording" \
+          | jq -j '.[] | select(.m.type == "serial_data") | .m.data | @base64d' > "${{ inputs.serial-log }}" || true
+        echo "--- Serial output ---"
+        cat "${{ inputs.serial-log }}" 2>/dev/null || echo "(no output captured)"
+
+        {
+          echo "### Run record: $NAME"
+          echo
+          jq -r .badge_markdown srig-record.json
+          echo
+          echo "Played back at $URL"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        if [ "$(jq -r .state srig-record.json)" != "ready" ]; then
+          echo "::error::the recording failed: $(jq -r '.error // "unknown"' srig-record.json)"
+          exit 1
+        fi
+
     - name: Create session
       id: session
+      if: inputs.record != 'true'
       shell: bash
       env:
         SRIG_API_KEY: ${{ inputs.api-key }}
@@ -82,7 +156,7 @@ runs:
         echo "Session created: ${SESSION}"
 
     - name: Flash firmware
-      if: inputs.firmware != ''
+      if: inputs.record != 'true' && inputs.firmware != ''
       shell: bash
       env:
         SRIG_API_KEY: ${{ inputs.api-key }}
@@ -90,7 +164,7 @@ runs:
         srig flash "${{ inputs.firmware }}" --session "${{ steps.session.outputs.session_id }}"
 
     - name: Capture serial output
-      if: inputs.firmware != ''
+      if: inputs.record != 'true' && inputs.firmware != ''
       shell: bash
       env:
         SRIG_API_KEY: ${{ inputs.api-key }}
@@ -103,7 +177,7 @@ runs:
         cat "${{ inputs.serial-log }}" 2>/dev/null || echo "(no output captured)"
 
     - name: End session
-      if: always()
+      if: always() && steps.session.outputs.session_id != ''
       shell: bash
       env:
         SRIG_API_KEY: ${{ inputs.api-key }}
